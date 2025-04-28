@@ -73,3 +73,4 @@ doc/api/
 .flutter-plugins
 .flutter-plugins-dependencies
 >>>>>>> 65b62a75d6d1fefd18d6602a15753da0f3709029
+assets/sounds/ui/*.exe
