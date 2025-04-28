@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "firebase": "^11.6.1",
+    "ws": "^8.18.1"
+  },
+  "name": "molo",
+  "version": "1.0.0",
+  "description": "<<<<<<< HEAD\r # molo",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MOHANED8/connect4.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MOHANED8/connect4/issues"
+  },
+  "homepage": "https://github.com/MOHANED8/connect4#readme"
+}

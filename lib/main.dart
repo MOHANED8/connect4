@@ -1,32 +1,36 @@
+// ignore_for_file: unused_import, avoid_print, depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:async';
 import 'game_mode_page.dart';
+import 'services/sound_service.dart';
+// import 'package:firebase_core/firebase_core.dart';
+// import 'firebase_options.dart'; // Uncomment if you have this file
+// TODO: If you see an error for DefaultFirebaseOptions, run `flutterfire configure` to regenerate firebase_options.dart
 
-void main() => runApp(const ConnectFourApp());
+void main() async {
+  print('MAIN STARTED');
+  WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp(
+  //   options: DefaultFirebaseOptions.currentPlatform,
+  // );
+  runApp(const MyApp());
+}
 
-class ConnectFourApp extends StatelessWidget {
-  const ConnectFourApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Connect Four Setup',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF1A1A2E),
-        textTheme: ThemeData.dark().textTheme.apply(
-              fontFamily:
-                  'Roboto', // 👈 Replace 'Roboto' with your desired font
-              bodyColor: Colors.white, // 👈 Make all body text white
-              displayColor: Colors.white, // 👈 Make headline text white
-            ),
-        inputDecorationTheme: const InputDecorationTheme(
-          labelStyle: TextStyle(color: Color.fromARGB(179, 0, 0, 0)),
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white54),
-          ),
-        ),
+      title: 'Connect Four',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        useMaterial3: true,
       ),
       home: const GameModePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
