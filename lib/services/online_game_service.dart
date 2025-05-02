@@ -5,6 +5,10 @@ import 'dart:async';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+
+// Set this to your public server address after deployment
+const String kWebSocketHost = String.fromEnvironment('WEBSOCKET_HOST', defaultValue: 'localhost:8080');
 
 class OnlineGameService {
   // Generate a simple 6-letter room code
@@ -16,9 +20,10 @@ class OnlineGameService {
 
   String _getWebSocketUrl(String roomCode, String playerName,
       {bool isHost = false}) {
-    // Use localhost for local development
-    const host = 'localhost:8080';
-    return 'ws://$host/?matchId=$roomCode&playerName=$playerName${isHost ? '&host=1' : ''}';
+    final host = kWebSocketHost;
+    final isLocalhost = host.contains('localhost') || host.contains('127.0.0.1');
+    final protocol = (kIsWeb && !isLocalhost) ? 'wss' : 'ws';
+    return '$protocol://$host/?matchId=$roomCode&playerName=$playerName${isHost ? '&host=1' : ''}';
   }
 
   // Create a room and return the WebSocket channel

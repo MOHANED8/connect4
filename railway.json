@@ -1,0 +1,9 @@
+{
+  "build": {
+    "builder": "dart",
+    "watch": ["lib/server.dart"]
+  },
+  "deploy": {
+    "start": "dart lib/server.dart"
+  }
+} 
