@@ -1,0 +1,9 @@
+name: connect4_server
+version: 1.0.0
+description: Connect 4 game server
+
+environment:
+  sdk: '>=2.17.0 <4.0.0'
+
+dependencies:
+  web_socket_channel: any 
