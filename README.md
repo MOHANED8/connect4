@@ -1,20 +1,51 @@
-<<<<<<< HEAD
-# molo
+# 3D Connect‑Four in Flutter
 
-A new Flutter project.
+![Demo](docs/screenshots/intro.gif)
 
-## Getting Started
+A fully cross‑platform, feature-rich 3D rendition of the classic Connect Four game, built end-to-end in Flutter. Play locally, challenge smart AI opponents, or battle friends online in real-time.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 🚀 Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- **Multi‑Mode Gameplay**  
+  - Local hot-seat duels (two players on one device)  
+  - Bot battles with 3 difficulty levels (Beginner → Professional using Minimax)  
+  - Online rooms: create or join games with unique codes, live chat, & spectate  
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-=======
-# connect4
->>>>>>> 65b62a75d6d1fefd18d6602a15753da0f3709029
+- **Rich, Animated UX**  
+  - Animated intro screen (logo bounce, particle effects, wave backgrounds)  
+  - Piece-drop animations, win celebrations with confetti, smooth transitions  
+  - Responsive design adapting across mobile (iOS/Android) and web  
+
+- **Real-Time Networking & Persistence**  
+  - Sub-100 ms sync powered by Firebase Realtime Database & WebSockets  
+  - Game history, rematch, and player stats saved locally via SharedPreferences  
+
+- **Smart AI Opponents**  
+  - Randomized moves at beginner level  
+  - Minimax-based professional AI for challenging matches  
+
+- **Immersive Audio**  
+  - Background music, drop-piece sound effects, timer ticks, victory jingles  
+
+- **Robust & Secure**  
+  - Input validation, room-access control, and graceful error handling  
+  - Optimized memory and board-state management for smooth performance  
+
+---
+
+## 📥 Getting Started
+
+### Prerequisites
+
+- Flutter ≥ 3.0.0  
+- Dart ≥ 2.17.0  
+- Firebase account (for Realtime Database usage)  
+
+### Installation
+
+1. **Clone the repository**  
+   ```bash
+   git clone https://github.com/MOHANED8/YourRepo.git
+   cd YourRepo
