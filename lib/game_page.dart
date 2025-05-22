@@ -7,8 +7,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'services/sound_service.dart';
 import 'widgets/audio_settings_button.dart';
 import 'services/game_history_service.dart';
-import 'widgets/game_history_box.dart';
-import 'widgets/game_history_page.dart';
 import 'widgets/header_icons_row.dart';
 
 class GamePage extends StatefulWidget {
@@ -232,11 +230,32 @@ class _GamePageState extends State<GamePage>
   int _getOptimalMove() {
     int bestScore = -10000;
     int bestCol = 0;
+    int depth = 5; // Increased depth for better AI
+    int alpha = -10000;
+    int beta = 10000;
+
+    // Check for immediate wins first
     for (int col = 0; col < cols; col++) {
       if (board[0][col] != 0) continue;
       var temp = _cloneBoard();
       _dropPieceSim(temp, col, 2);
-      int score = _minimax(temp, 4, false, -10000, 10000);
+      if (_checkWin(temp, 2)) return col;
+    }
+
+    // Check for opponent's immediate wins
+    for (int col = 0; col < cols; col++) {
+      if (board[0][col] != 0) continue;
+      var temp = _cloneBoard();
+      _dropPieceSim(temp, col, 1);
+      if (_checkWin(temp, 1)) return col;
+    }
+
+    // Use minimax for other moves
+    for (int col = 0; col < cols; col++) {
+      if (board[0][col] != 0) continue;
+      var temp = _cloneBoard();
+      _dropPieceSim(temp, col, 2);
+      int score = _minimax(temp, depth, false, alpha, beta);
       if (score > bestScore) {
         bestScore = score;
         bestCol = col;
@@ -247,7 +266,10 @@ class _GamePageState extends State<GamePage>
 
   int _minimax(
       List<List<int>> tempBoard, int depth, bool isMax, int alpha, int beta) {
-    if (depth == 0 || _isTerminal(tempBoard)) return _evaluateBoard(tempBoard);
+    if (depth == 0 || _isTerminal(tempBoard)) {
+      return _evaluateBoard(tempBoard);
+    }
+
     if (isMax) {
       int maxEval = -10000;
       for (int col = 0; col < cols; col++) {
@@ -279,9 +301,73 @@ class _GamePageState extends State<GamePage>
       _checkWin(b, 1) || _checkWin(b, 2) || b[0].every((cell) => cell != 0);
 
   int _evaluateBoard(List<List<int>> b) {
-    if (_checkWin(b, 2)) return 1000;
-    if (_checkWin(b, 1)) return -1000;
-    return 0;
+    int score = 0;
+
+    // Evaluate center column preference
+    for (int row = 0; row < rows; row++) {
+      if (b[row][3] == 2) score += 3;
+      if (b[row][3] == 1) score -= 3;
+    }
+
+    // Evaluate horizontal windows
+    for (int row = 0; row < rows; row++) {
+      for (int col = 0; col < cols - 3; col++) {
+        score += _evaluateWindow(b, row, col, 0, 1);
+      }
+    }
+
+    // Evaluate vertical windows
+    for (int row = 0; row < rows - 3; row++) {
+      for (int col = 0; col < cols; col++) {
+        score += _evaluateWindow(b, row, col, 1, 0);
+      }
+    }
+
+    // Evaluate diagonal windows
+    for (int row = 0; row < rows - 3; row++) {
+      for (int col = 0; col < cols - 3; col++) {
+        score += _evaluateWindow(b, row, col, 1, 1);
+        score += _evaluateWindow(b, row + 3, col, -1, 1);
+      }
+    }
+
+    return score;
+  }
+
+  int _evaluateWindow(
+      List<List<int>> b, int row, int col, int rowDir, int colDir) {
+    int score = 0;
+    int player2Count = 0;
+    int player1Count = 0;
+    int emptyCount = 0;
+
+    for (int i = 0; i < 4; i++) {
+      if (b[row + i * rowDir][col + i * colDir] == 2) {
+        player2Count++;
+      } else if (b[row + i * rowDir][col + i * colDir] == 1) {
+        player1Count++;
+      } else {
+        emptyCount++;
+      }
+    }
+
+    if (player2Count == 4) {
+      score += 100;
+    } else if (player2Count == 3 && emptyCount == 1) {
+      score += 5;
+    } else if (player2Count == 2 && emptyCount == 2) {
+      score += 2;
+    }
+
+    if (player1Count == 4) {
+      score -= 100;
+    } else if (player1Count == 3 && emptyCount == 1) {
+      score -= 5;
+    } else if (player1Count == 2 && emptyCount == 2) {
+      score -= 2;
+    }
+
+    return score;
   }
 
   List<List<int>> _cloneBoard() => board.map((row) => List.of(row)).toList();
@@ -342,6 +428,8 @@ class _GamePageState extends State<GamePage>
     final baseSize = min(width / 1.2, height / 1.5);
     final fontSize = baseSize * 0.04;
     final padding = baseSize * 0.04;
+
+    _soundService.playButtonClick();
 
     showDialog(
       context: context,
@@ -425,6 +513,7 @@ class _GamePageState extends State<GamePage>
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        _soundService.playButtonClick();
                         Navigator.pop(context);
                         resetBoardAndTimer();
                       },
@@ -471,27 +560,35 @@ class _GamePageState extends State<GamePage>
       result = '${widget.player1Name} Wins';
       resultColor = Colors.amber;
       resultIcon = Icons.emoji_events;
-      GameHistoryService.addGameResult(
-          winner: widget.player1Name,
-          loser: widget.isBotEnabled ? 'Bot' : widget.player2Name,
-          date: DateTime.now().toString().substring(0, 16));
+      GameHistoryService().addGame(GameHistory(
+        opponentName: widget.isBotEnabled ? 'Bot' : widget.player2Name,
+        isWinner: true,
+        score: player1Wins,
+        date: DateTime.now(),
+      ));
     } else if (player2Wins > player1Wins) {
       result = widget.isBotEnabled ? 'Bot Wins' : '${widget.player2Name} Wins';
       resultColor = Colors.redAccent;
       resultIcon = widget.isBotEnabled ? Icons.smart_toy : Icons.emoji_events;
-      GameHistoryService.addGameResult(
-          winner: widget.isBotEnabled ? 'Bot' : widget.player2Name,
-          loser: widget.player1Name,
-          date: DateTime.now().toString().substring(0, 16));
+      GameHistoryService().addGame(GameHistory(
+        opponentName: widget.player1Name,
+        isWinner: false,
+        score: player2Wins,
+        date: DateTime.now(),
+      ));
     } else {
       result = "It's a Tie!";
       resultColor = Colors.blue;
       resultIcon = Icons.handshake;
-      GameHistoryService.addGameResult(
-          winner: 'Tie',
-          loser: 'Tie',
-          date: DateTime.now().toString().substring(0, 16));
+      GameHistoryService().addGame(GameHistory(
+        opponentName: 'Tie',
+        isWinner: false,
+        score: 0,
+        date: DateTime.now(),
+      ));
     }
+
+    _soundService.playButtonClick();
 
     showDialog(
       context: context,
@@ -583,6 +680,7 @@ class _GamePageState extends State<GamePage>
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        _soundService.playButtonClick();
                         Navigator.pop(context);
                         setState(() {
                           player1Wins = 0;
@@ -625,6 +723,8 @@ class _GamePageState extends State<GamePage>
     final baseSize = min(width / 1.2, height / 1.5);
     final fontSize = baseSize * 0.04;
     final padding = baseSize * 0.04;
+
+    _soundService.playButtonClick();
 
     showDialog(
       context: context,
@@ -680,6 +780,7 @@ class _GamePageState extends State<GamePage>
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () {
+                        _soundService.playButtonClick();
                         Navigator.pop(context);
                         resetBoardAndTimer();
                       },
@@ -925,6 +1026,39 @@ class _GamePageState extends State<GamePage>
                                                         color: Colors.white12,
                                                         width: 1,
                                                       ),
+                                                      boxShadow: board[row]
+                                                                  [col] !=
+                                                              0
+                                                          ? [
+                                                              // White glow for current player's coins
+                                                              if (board[row]
+                                                                      [col] ==
+                                                                  currentPlayer)
+                                                                BoxShadow(
+                                                                  color: Colors
+                                                                      .white
+                                                                      .withOpacity(
+                                                                          0.85),
+                                                                  blurRadius:
+                                                                      18,
+                                                                  spreadRadius:
+                                                                      3,
+                                                                ),
+                                                              // Subtle color glow for all coins
+                                                              BoxShadow(
+                                                                color: (board[row][col] ==
+                                                                            1
+                                                                        ? Colors
+                                                                            .amber
+                                                                        : Colors
+                                                                            .redAccent)
+                                                                    .withOpacity(
+                                                                        0.5),
+                                                                blurRadius: 8,
+                                                                spreadRadius: 2,
+                                                              ),
+                                                            ]
+                                                          : null,
                                                     ),
                                                     child: AspectRatio(
                                                       aspectRatio: 1,

@@ -1,0 +1,2 @@
+C:/Users/lenovo/Desktop/molo/molo/android/app/.cxx/Debug/49thi3oh/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/lenovo/Desktop/molo/molo/android/app/.cxx/Debug/49thi3oh/x86_64/CMakeFiles/rebuild_cache.dir

@@ -1,7 +1,8 @@
-// ignore_for_file: use_build_context_synchronously, deprecated_member_use
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use, unused_import, unused_local_variable
 
 import 'package:flutter/material.dart';
 import '../services/sound_service.dart';
+import '../utils/styles.dart';
 
 class SoundSettingsDialog extends StatefulWidget {
   const SoundSettingsDialog({super.key});
@@ -13,13 +14,9 @@ class SoundSettingsDialog extends StatefulWidget {
 class _SoundSettingsDialogState extends State<SoundSettingsDialog> {
   final SoundService _soundService = SoundService();
   bool _musicEnabled = true;
-  bool _effectsEnabled = true;
-  bool _uiEnabled = true;
-  bool _alarmEnabled = true;
+  bool _sfxEnabled = true;
   double _musicVolume = 0.5;
-  double _effectsVolume = 0.7;
-  double _uiVolume = 0.5;
-  double _alarmVolume = 0.8;
+  double _sfxVolume = 0.7;
   bool _loading = true;
 
   @override
@@ -32,34 +29,69 @@ class _SoundSettingsDialogState extends State<SoundSettingsDialog> {
     await _soundService.initialize();
     setState(() {
       _musicEnabled = _soundService.isMusicEnabled;
-      _effectsEnabled = _soundService.isEffectsEnabled;
-      _uiEnabled = _soundService.isUIEnabled;
-      _alarmEnabled = _soundService.isAlarmEnabled;
       _musicVolume = _soundService.musicVolume;
-      _effectsVolume = _soundService.effectsVolume;
-      _uiVolume = _soundService.uiVolume;
-      _alarmVolume = _soundService.alarmVolume;
+      // SFX: combine effects, UI, and alarm
+      _sfxEnabled = _soundService.isEffectsEnabled ||
+          _soundService.isUIEnabled ||
+          _soundService.isAlarmEnabled;
+      _sfxVolume = (_soundService.effectsVolume +
+              _soundService.uiVolume +
+              _soundService.alarmVolume) /
+          3.0;
       _loading = false;
     });
   }
 
   Future<void> _saveSettings() async {
     await _soundService.setMusicEnabled(_musicEnabled);
-    await _soundService.setEffectsEnabled(_effectsEnabled);
-    await _soundService.setUIEnabled(_uiEnabled);
-    await _soundService.setAlarmEnabled(_alarmEnabled);
     await _soundService.setMusicVolume(_musicVolume);
-    await _soundService.setEffectsVolume(_effectsVolume);
-    await _soundService.setUIVolume(_uiVolume);
-    await _soundService.setAlarmVolume(_alarmVolume);
+    // SFX applies to all non-music
+    await _soundService.setEffectsEnabled(_sfxEnabled);
+    await _soundService.setUIEnabled(_sfxEnabled);
+    await _soundService.setAlarmEnabled(_sfxEnabled);
+    await _soundService.setEffectsVolume(_sfxVolume);
+    await _soundService.setUIVolume(_sfxVolume);
+    await _soundService.setAlarmVolume(_sfxVolume);
+  }
+
+  Widget _buildVolumeRow({
+    required String label,
+    required double volume,
+    required ValueChanged<double> onVolume,
+    required IconData icon,
+    required Color iconColor,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Slider(
+              value: volume,
+              onChanged: onVolume,
+              min: 0.0,
+              max: 1.0,
+              divisions: 10,
+              activeColor: Colors.blue,
+              inactiveColor: Colors.blue.withOpacity(0.2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text('${(volume * 100).round()}%',
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.black.withOpacity(0.92),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: Colors.black,
       child: _loading
           ? const SizedBox(
               height: 200,
@@ -67,72 +99,68 @@ class _SoundSettingsDialogState extends State<SoundSettingsDialog> {
             )
           : Padding(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+                  const EdgeInsets.symmetric(horizontal: 20.0, vertical: 18.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header
                   Row(
                     children: [
-                      const Icon(Icons.volume_up, color: Colors.blue, size: 28),
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.volume_up,
+                          color: Colors.blue,
+                          size: 28,
+                        ),
+                      ),
                       const SizedBox(width: 10),
-                      Text('Sound Settings',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          )),
+                      const Text(
+                        'Sound Settings',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 22,
+                        ),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 18),
-                  _buildSwitchSlider(
-                    label: 'Music',
-                    enabled: _musicEnabled,
-                    onToggle: (v) => setState(() => _musicEnabled = v),
+                  const SizedBox(height: 24),
+                  _buildVolumeRow(
+                    label: 'MUSIC',
                     volume: _musicVolume,
                     onVolume: (v) => setState(() => _musicVolume = v),
-                    onTest: () => _soundService.playMainTheme(),
+                    icon: Icons.music_note,
+                    iconColor: Colors.amber,
                   ),
-                  const SizedBox(height: 10),
-                  _buildSwitchSlider(
-                    label: 'Effects',
-                    enabled: _effectsEnabled,
-                    onToggle: (v) => setState(() => _effectsEnabled = v),
-                    volume: _effectsVolume,
-                    onVolume: (v) => setState(() => _effectsVolume = v),
-                    onTest: () => _soundService.playPieceDrop(),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildSwitchSlider(
-                    label: 'UI',
-                    enabled: _uiEnabled,
-                    onToggle: (v) => setState(() => _uiEnabled = v),
-                    volume: _uiVolume,
-                    onVolume: (v) => setState(() => _uiVolume = v),
-                    onTest: () => _soundService.playButtonClick(),
-                  ),
-                  const SizedBox(height: 10),
-                  _buildSwitchSlider(
-                    label: 'Alarm',
-                    enabled: _alarmEnabled,
-                    onToggle: (v) => setState(() => _alarmEnabled = v),
-                    volume: _alarmVolume,
-                    onVolume: (v) => setState(() => _alarmVolume = v),
-                    onTest: () => _soundService.playTimerTick(),
+                  _buildVolumeRow(
+                    label: 'SFX',
+                    volume: _sfxVolume,
+                    onVolume: (v) => setState(() => _sfxVolume = v),
+                    icon: Icons.volume_up,
+                    iconColor: Colors.amber,
                   ),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white70,
-                        ),
-                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Cancel',
+                            style: TextStyle(color: Colors.white)),
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () async {
+                          _soundService.playButtonClick();
                           await _saveSettings();
                           Navigator.pop(context);
                         },
@@ -140,7 +168,7 @@ class _SoundSettingsDialogState extends State<SoundSettingsDialog> {
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(
@@ -154,70 +182,6 @@ class _SoundSettingsDialogState extends State<SoundSettingsDialog> {
                 ],
               ),
             ),
-    );
-  }
-
-  Widget _buildSwitchSlider({
-    required String label,
-    required bool enabled,
-    required ValueChanged<bool> onToggle,
-    required double volume,
-    required ValueChanged<double> onVolume,
-    required VoidCallback onTest,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const IconButton(
-            icon: Icon(Icons.volume_down, color: Colors.white38, size: 20),
-            onPressed: null,
-            splashRadius: 18,
-          ),
-          Expanded(
-            child: Slider(
-              value: volume,
-              onChanged: enabled ? onVolume : null,
-              min: 0.0,
-              max: 1.0,
-              divisions: 20,
-              activeColor: Colors.blue,
-              inactiveColor: Colors.white12,
-            ),
-          ),
-          const IconButton(
-            icon: Icon(Icons.volume_up, color: Colors.white38, size: 20),
-            onPressed: null,
-            splashRadius: 18,
-          ),
-          const SizedBox(width: 8),
-          Switch(
-            value: enabled,
-            onChanged: onToggle,
-            activeColor: Colors.blue,
-          ),
-          IconButton(
-            icon: const Icon(Icons.play_arrow, color: Colors.white70),
-            onPressed: enabled ? onTest : null,
-            tooltip: 'Test',
-            splashRadius: 18,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

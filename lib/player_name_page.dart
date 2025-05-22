@@ -2,15 +2,14 @@
 // ignore_for_file: deprecated_member_use, unused_import, unused_element, depend_on_referenced_packages
 
 import 'package:flutter/material.dart';
-import 'round_select_page.dart';
-import 'widgets/audio_settings_button.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'services/sound_service.dart';
-import 'widgets/game_history_box.dart';
-import 'services/game_history_service.dart';
-import 'widgets/game_history_page.dart';
+import 'widgets/audio_settings_button.dart';
+import 'round_select_page.dart';
 import 'widgets/header_icons_row.dart';
 import 'widgets/page_template.dart';
 import 'widgets/sound_settings_dialog.dart';
+import 'pages/game_history_page.dart';
 
 class PlayerNamePage extends StatefulWidget {
   final bool isBotEnabled;
@@ -51,6 +50,7 @@ class _PlayerNamePageState extends State<PlayerNamePage>
   }
 
   void _goToNext() {
+    SoundService().playButtonClick();
     final player1Name = player1Controller.text.trim().isEmpty
         ? 'Player 1'
         : player1Controller.text.trim();
@@ -85,17 +85,23 @@ class _PlayerNamePageState extends State<PlayerNamePage>
 
   @override
   Widget build(BuildContext context) {
+    SoundService().playButtonClick();
     SoundService.setSnackBarContext(context);
     return PageTemplate(
       title: 'Enter Player Names',
-      onBack: () => Navigator.pop(context),
+      onBack: () {
+        SoundService().playButtonClick();
+        Navigator.pop(context);
+      },
       onSettings: () {
+        SoundService().playButtonClick();
         showDialog(
           context: context,
           builder: (context) => const SoundSettingsDialog(),
         );
       },
       onTrophy: () {
+        SoundService().playButtonClick();
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const GameHistoryPage()),
@@ -107,21 +113,15 @@ class _PlayerNamePageState extends State<PlayerNamePage>
 
   Widget _buildPlayerNameContent(BuildContext context) {
     final maxWidth = MediaQuery.of(context).size.width;
-    final maxHeight = MediaQuery.of(context).size.height;
-    final contentWidth = maxWidth > 600 ? 500.0 : maxWidth * 0.95;
-    final verticalPadding = maxHeight.clamp(32.0, 120.0) * 0.08;
-    final fieldSpacing = maxHeight.clamp(16.0, 60.0) * 0.03;
-    final buttonSpacing = maxHeight.clamp(24.0, 80.0) * 0.04;
-    final cardPadding = maxWidth.clamp(16.0, 40.0) * 0.05;
+    final contentWidth = maxWidth > 500 ? 400.0 : maxWidth * 0.95;
     return Center(
       child: SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: contentWidth,
-            minHeight: maxHeight * 0.5,
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: verticalPadding),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 32.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: contentWidth,
+            ),
             child: Card(
               color: Colors.white.withOpacity(0.08),
               elevation: 8,
@@ -129,7 +129,7 @@ class _PlayerNamePageState extends State<PlayerNamePage>
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Padding(
-                padding: EdgeInsets.all(cardPadding),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,22 +139,22 @@ class _PlayerNamePageState extends State<PlayerNamePage>
                       'Player 1',
                       'Enter name for Player 1',
                       maxWidth,
-                      maxHeight,
+                      800, // dummy height for font size
                     ),
                     if (!widget.isBotEnabled) ...[
-                      SizedBox(height: fieldSpacing),
+                      const SizedBox(height: 20.0),
                       _buildTextField(
                         player2Controller,
                         'Player 2',
                         'Enter name for Player 2',
                         maxWidth,
-                        maxHeight,
+                        800,
                       ),
                     ],
-                    SizedBox(height: buttonSpacing),
+                    const SizedBox(height: 28.0),
                     SizedBox(
                       width: double.infinity,
-                      height: maxHeight * 0.07,
+                      height: 52.0,
                       child: ElevatedButton(
                         onPressed: _goToNext,
                         style: ElevatedButton.styleFrom(
@@ -165,10 +165,10 @@ class _PlayerNamePageState extends State<PlayerNamePage>
                           ),
                           elevation: 0,
                         ),
-                        child: Text(
+                        child: const Text(
                           'Next',
                           style: TextStyle(
-                            fontSize: maxWidth * 0.04,
+                            fontSize: 18.0,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

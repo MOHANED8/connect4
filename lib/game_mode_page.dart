@@ -1,12 +1,11 @@
-// ignore_for_file: deprecated_member_use, unused_local_variable, unused_import, unused_element, use_build_context_synchronously, unused_field
+// ignore_for_file: deprecated_member_use, unused_local_variable, unused_import, unused_element, use_build_context_synchronously, unused_field, avoid_print
 
 import 'package:flutter/material.dart';
 import 'player_name_page.dart';
 import 'widgets/audio_settings_button.dart';
 import 'services/sound_service.dart';
-import 'widgets/game_history_box.dart';
 import 'services/game_history_service.dart';
-import 'widgets/game_history_page.dart';
+import 'pages/game_history_page.dart';
 import 'widgets/header_icons_row.dart';
 import 'services/online_game_service.dart';
 import 'online_game_page.dart';
@@ -60,6 +59,7 @@ class _GameModePageState extends State<GameModePage>
   }
 
   void _goToNext() {
+    SoundService().playButtonClick();
     Navigator.push(
       context,
       PageRouteBuilder(
@@ -82,11 +82,13 @@ class _GameModePageState extends State<GameModePage>
 
   @override
   Widget build(BuildContext context) {
+    SoundService().playButtonClick();
     SoundService.setSnackBarContext(context);
     return PageTemplate(
       title: isOnlineMode ? 'Play Online' : 'Select Game Mode',
       onBack: isOnlineMode ? () => setState(() => isOnlineMode = false) : null,
       onSettings: () {
+        SoundService().playButtonClick();
         showDialog(
           context: context,
           builder: (context) => const SoundSettingsDialog(),
@@ -407,104 +409,6 @@ class _GameModePageState extends State<GameModePage>
   }
 
   Widget _buildOnlineMode(double fontSize, double padding) {
-    final onlineService = OnlineGameService();
-    if (isCreatingRoom) {
-      // Host: create a room and wait for opponent
-      if (createdRoomCode == null) {
-        final code = onlineService.generateRoomCode();
-        setState(() {
-          createdRoomCode = code;
-        });
-        final channel = onlineService.createRoom(
-          onlineNameController.text.trim().isEmpty
-              ? 'Player'
-              : onlineNameController.text.trim(),
-          code,
-        );
-        onlineService.listenToRoom(channel).listen((data) {
-          if (data['type'] == 'state' &&
-              data['status'] == 'active' &&
-              data['player2'] != null) {
-            if (!mounted) return;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => OnlineGamePage(
-                  matchId: code,
-                  playerName: onlineNameController.text.trim().isEmpty
-                      ? 'Player'
-                      : onlineNameController.text.trim(),
-                ),
-              ),
-            );
-          } else if (data['type'] == 'error') {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(data['message'] ?? 'Error occurred.'),
-                  backgroundColor: Colors.red),
-            );
-            setState(() {
-              isCreatingRoom = false;
-              createdRoomCode = null;
-              isWaitingForMatch = false;
-            });
-          }
-        });
-        isWaitingForMatch = true;
-      }
-      return Card(
-        color: Colors.white.withOpacity(0.08),
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Room Code:',
-                style: TextStyle(
-                    color: Colors.amber,
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              SelectableText(
-                createdRoomCode ?? '...waiting...',
-                style: TextStyle(
-                    fontSize: fontSize * 1.5,
-                    color: Colors.white,
-                    letterSpacing: 4,
-                    fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              if (isWaitingForMatch)
-                const Column(
-                  children: [
-                    CircularProgressIndicator(color: Colors.amber),
-                    SizedBox(height: 16),
-                    Text('Waiting for opponent...',
-                        style: TextStyle(color: Colors.amber)),
-                  ],
-                ),
-              TextButton(
-                onPressed: () => setState(() {
-                  isCreatingRoom = false;
-                  createdRoomCode = null;
-                  isWaitingForMatch = false;
-                }),
-                child:
-                    const Text('Back', style: TextStyle(color: Colors.white70)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
     if (isJoiningRoom) {
       return Card(
         color: Colors.white.withOpacity(0.08),
@@ -543,46 +447,9 @@ class _GameModePageState extends State<GameModePage>
               ElevatedButton(
                 onPressed: (joinCodeController.text.trim().isNotEmpty &&
                         !isWaitingForMatch)
-                    ? () async {
-                        setState(() {
-                          isWaitingForMatch = true;
-                        });
-                        final code =
-                            joinCodeController.text.trim().toUpperCase();
-                        final playerName =
-                            onlineNameController.text.trim().isEmpty
-                                ? 'Player'
-                                : onlineNameController.text.trim();
-                        final channel =
-                            onlineService.joinRoom(playerName, code);
-                        onlineService.listenToRoom(channel).listen((data) {
-                          if (data['type'] == 'state' &&
-                              data['status'] == 'active' &&
-                              data['player2'] != null) {
-                            if (!mounted) return;
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => OnlineGamePage(
-                                  matchId: code,
-                                  playerName: playerName,
-                                ),
-                              ),
-                            );
-                          } else if (data['type'] == 'error') {
-                            if (!mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                  content: Text(
-                                      data['message'] ?? 'Error occurred.'),
-                                  backgroundColor: Colors.red),
-                            );
-                            setState(() {
-                              isJoiningRoom = false;
-                              isWaitingForMatch = false;
-                            });
-                          }
-                        });
+                    ? () {
+                        SoundService().playButtonClick();
+                        _joinRoom();
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
@@ -612,97 +479,201 @@ class _GameModePageState extends State<GameModePage>
           ),
         ),
       );
-    }
-    // Default: show create/join options
-    return Card(
-      color: Colors.white.withOpacity(0.08),
-      elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: onlineNameController,
-              style: TextStyle(color: Colors.white, fontSize: fontSize * 1.1),
-              decoration: InputDecoration(
-                labelText: 'Your Name',
-                labelStyle: const TextStyle(color: Colors.white70),
-                filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white24),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white24),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.amber),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add_box, color: Colors.amber),
-              label: Text('Create Online Game',
-                  style: TextStyle(
-                      fontSize: fontSize, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: EdgeInsets.symmetric(vertical: padding * 0.75),
-              ),
-              onPressed: isWaitingForMatch
-                  ? null
-                  : () async {
-                      setState(() {
-                        isCreatingRoom = true;
-                        isWaitingForMatch = true;
-                      });
-                    },
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.input, color: Colors.amber),
-              label: Text('Join Online Game',
-                  style: TextStyle(
-                      fontSize: fontSize, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
-                foregroundColor: Colors.black,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: EdgeInsets.symmetric(vertical: padding * 0.75),
-              ),
-              onPressed: isWaitingForMatch
-                  ? null
-                  : () {
-                      setState(() {
-                        isJoiningRoom = true;
-                      });
-                    },
-            ),
-            const SizedBox(height: 24),
-            TextButton(
-              onPressed: () => setState(() => isOnlineMode = false),
-              child:
-                  const Text('Back', style: TextStyle(color: Colors.white70)),
-            ),
-          ],
+    } else {
+      return Card(
+        color: Colors.white.withOpacity(0.08),
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
         ),
-      ),
-    );
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: onlineNameController,
+                style: TextStyle(color: Colors.white, fontSize: fontSize * 1.1),
+                decoration: InputDecoration(
+                  labelText: 'Your Name',
+                  labelStyle: const TextStyle(color: Colors.white70),
+                  filled: true,
+                  fillColor: Colors.white10,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.amber),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add_box, color: Colors.amber),
+                label: Text('Create Online Game',
+                    style: TextStyle(
+                        fontSize: fontSize, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: padding * 0.75),
+                ),
+                onPressed: isWaitingForMatch
+                    ? null
+                    : () {
+                        SoundService().playButtonClick();
+                        _createRoom();
+                      },
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.input, color: Colors.amber),
+                label: Text('Join Online Game',
+                    style: TextStyle(
+                        fontSize: fontSize, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.black,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.symmetric(vertical: padding * 0.75),
+                ),
+                onPressed: isWaitingForMatch
+                    ? null
+                    : () {
+                        SoundService().playButtonClick();
+                        setState(() {
+                          isJoiningRoom = true;
+                        });
+                      },
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () => setState(() => isOnlineMode = false),
+                child:
+                    const Text('Back', style: TextStyle(color: Colors.white70)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+  }
+
+  void _createRoom() {
+    if (onlineNameController.text.isEmpty) {
+      SoundService().playButtonClick();
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter your name')));
+      return;
+    }
+
+    SoundService().playButtonClick();
+    setState(() {
+      isCreatingRoom = true;
+    });
+
+    try {
+      final roomCode = OnlineGameService().generateRoomCode();
+      setState(() {
+        createdRoomCode = roomCode;
+        isWaitingForMatch = true;
+      });
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OnlineGamePage(
+            matchId: roomCode,
+            playerName: onlineNameController.text,
+            isHost: true,
+          ),
+        ),
+      ).then((_) {
+        // Oyun ekranından geri dönünce, durumu sıfırla
+        if (mounted) {
+          SoundService().playButtonClick();
+          setState(() {
+            isWaitingForMatch = false;
+            isCreatingRoom = false;
+            print('Reset waiting state after returning from game');
+          });
+        }
+      });
+    } catch (e) {
+      SoundService().playButtonClick();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to create room: $e')));
+      setState(() {
+        isCreatingRoom = false;
+        isWaitingForMatch = false;
+      });
+    }
+  }
+
+  void _joinRoom() {
+    if (onlineNameController.text.isEmpty) {
+      SoundService().playButtonClick();
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter your name')));
+      return;
+    }
+
+    if (joinCodeController.text.isEmpty) {
+      SoundService().playButtonClick();
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter room code')));
+      return;
+    }
+
+    SoundService().playButtonClick();
+    setState(() {
+      isJoiningRoom = true;
+      isWaitingForMatch = true;
+    });
+
+    try {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OnlineGamePage(
+            matchId: joinCodeController.text.toUpperCase(),
+            playerName: onlineNameController.text,
+            isHost: false,
+          ),
+        ),
+      ).then((_) {
+        // Oyun ekranından geri dönünce, durumu sıfırla
+        if (mounted) {
+          SoundService().playButtonClick();
+          setState(() {
+            isWaitingForMatch = false;
+            isJoiningRoom = false;
+            joinCodeController.clear();
+            print('Reset joining state after returning from game');
+          });
+        }
+      });
+    } catch (e) {
+      SoundService().playButtonClick();
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to join room: $e')));
+      setState(() {
+        isJoiningRoom = false;
+        isWaitingForMatch = false;
+      });
+    }
   }
 }

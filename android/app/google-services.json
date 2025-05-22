@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "809260816578",
-    "project_id": "connect-4-bf56e",
-    "storage_bucket": "connect-4-bf56e.firebasestorage.app"
+    "project_number": "347753597066",
+    "firebase_url": "https://connect4-67b1c-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "connect4-67b1c",
+    "storage_bucket": "connect4-67b1c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:809260816578:android:5d603f6f678910d700835b",
+        "mobilesdk_app_id": "1:347753597066:android:c433c89f947869f7408573",
         "android_client_info": {
           "package_name": "com.example.molo"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBbZwaXpv37AtOYy7pNUyqxWXJsbDMCTRo"
+          "current_key": "AIzaSyAYnhwpxVYqc3x2O-yMEmiR5-9PChsuq0M"
         }
       ],
       "services": {

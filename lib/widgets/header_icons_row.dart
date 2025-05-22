@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'audio_settings_button.dart';
-import 'game_history_page.dart';
+import '../pages/game_history_page.dart';
 
 class HeaderIconsRow extends StatelessWidget {
   const HeaderIconsRow({super.key});
